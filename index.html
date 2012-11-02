@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <script src="tasky.js"></script>
+    <script>
+      //<![CDATA[
+      $(function() {
+        $("#tasks").tasky({
+          width: 300,
+          height: 200,
+          indentTag: " * "
+        });
+      });
+      //]]>
+    </script>
+  </head>
+  <body>
+    <textarea id="tasks" >Some text
+and other text
+and another text...
+    </textarea>
+  </body>
+</html>
