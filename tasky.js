@@ -1,3 +1,33 @@
+$.extend(Object.prototype, {
+  clone: function() {
+    return this.constructor(this);
+  }
+});
+
+$.extend(String.prototype, {
+  hasAtBeginning: function(myValue) {
+    return this.indexOf(myValue) == 0;
+  },
+  hasAtEnd: function(myValue) {
+    return this.lastIndexOf(myValue) == this.length - myValue.length;
+  },
+  chompLeft: function() {
+    if(this.hasAtBeginning("\n")) {
+      return this.replace("\n", "");
+    }
+    return this;
+  },
+  countOfAtBeginning: function(myValue) {
+    var result = 0;
+    var value = this.clone();
+    while(value.hasAtBeginning(myValue)) {
+      result++;
+      value = value.replace(myValue, "");
+    }
+    return result;
+  }
+});
+
 $.extend(HTMLTextAreaElement.prototype, {
   selection: function() {
     var result = null;
@@ -39,7 +69,7 @@ $.extend(HTMLTextAreaElement.prototype, {
       var selectionPos = this.selection();
       var pos = this.value.substring(0, selectionPos).lastIndexOf("\n") + 1;
       var scrollTop = this.scrollTop;
-      if(this.value.substring(pos, this.value.length).indexOf(myValue) == 0) {
+      if(this.value.substring(pos, this.value.length).hasAtBeginning(myValue)) {
         this.value = this.value.substring(0, pos) + this.value.substring(pos, this.value.length).replace(myValue, "");
         this.focus();
         this.selectionStart = selectionPos - myValue.length;
@@ -79,14 +109,9 @@ $.extend(HTMLTextAreaElement.prototype, {
     } else {
       line = this.currentLine();
     }
-    if(line.indexOf("\n") == 0) { line = line.replace("\n", ""); }
     if(typeof line == "string" && line != "") {
-      var iter = 0;
-      while(line.indexOf(options["indentTag"]) == 0) {
-        iter++;
-        line = line.replace(options["indentTag"], "");
-      }
-      return iter;
+      line = line.chompLeft();
+      return line.countOfAtBeginning(options["indentTag"]);
     }
     return 0;
   }
