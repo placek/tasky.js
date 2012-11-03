@@ -149,8 +149,6 @@ $.fn.extend({
 // VARIABLES
     var $target = $(this);
     var $options = $.extend({
-      width: 200,
-      height: 100,
       indentTag: "\u00bb",
       doneTag: "\u2713",
       indentKeyCode: 9, // Tab
@@ -184,20 +182,21 @@ $.fn.extend({
 
 // KEY BIND
     $target.keydown(function(event) {
-      if(event.keyCode == $options["indentKeyCode"] && event[$options["modKey"]] == true) {
-        event.preventDefault();
-        $target.trigger("indent:remove");
-      } else if(event.keyCode == $options["indentKeyCode"] && event[$options["modKey"]] == false) {
-        event.preventDefault();
-        $target.trigger("indent:add");
-      } else if(event.keyCode == $options["doneKeyCode"] && event[$options["modKey"]] == true) {
-        event.preventDefault();
-        $target.trigger("indent:do");
+      if(this.value != "") {
+        if(event.keyCode == $options["indentKeyCode"] && event[$options["modKey"]] == true) {
+          event.preventDefault();
+          $target.trigger("indent:remove");
+        } else if(event.keyCode == $options["indentKeyCode"] && event[$options["modKey"]] == false) {
+          event.preventDefault();
+          $target.trigger("indent:add");
+        } else if(event.keyCode == $options["doneKeyCode"] && event[$options["modKey"]] == true) {
+          event.preventDefault();
+          $target.trigger("indent:do");
+        }
       }
     });
 
 // CSS
-    $target.width($options["width"]);
-    $target.height($options["height"]);
+    $target.addClass("tasky-tasks");
   }
 });

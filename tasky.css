@@ -1,0 +1,9 @@
+.tasky-tasks {
+  width: 400px;
+  height: 200px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 15px;
+}
