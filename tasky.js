@@ -52,29 +52,56 @@ $.extend(HTMLTextAreaElement.prototype, {
     }
     return result;
   },
+  insertIntoPosition: function(pos, myValue) {
+    var scrollTop = this.scrollTop;
+    this.value = this.value.substring(0, pos) + myValue + this.value.substring(pos, this.value.length);
+    this.focus();
+    this.scrollTop = scrollTop;
+  },
+  removeFromPosition: function(pos, myValue) {
+    var scrollTop = this.scrollTop;
+    this.value = this.value.substring(0, pos) + this.value.substring(pos + myValue.length, this.value.length);
+    this.focus();
+    this.scrollTop = scrollTop;
+  },
   insertAtBeginningOfCaretLine: function(myValue) {
     if(typeof this.selection() == "number") {
       var selectionPos = this.selection();
       var pos = this.value.substring(0, selectionPos).lastIndexOf("\n") + 1;
-      var scrollTop = this.scrollTop;
-      this.value = this.value.substring(0, pos) + myValue + this.value.substring(pos, this.value.length);
-      this.focus();
+      this.insertIntoPosition(pos, myValue);
       this.selectionStart = selectionPos + myValue.length;
       this.selectionEnd = selectionPos + myValue.length;
-      this.scrollTop = scrollTop;
     }
   },
   removeFromBeginningOfCaretLine: function(myValue) {
     if(typeof this.selection() == "number") {
       var selectionPos = this.selection();
       var pos = this.value.substring(0, selectionPos).lastIndexOf("\n") + 1;
-      var scrollTop = this.scrollTop;
       if(this.value.substring(pos, this.value.length).hasAtBeginning(myValue)) {
-        this.value = this.value.substring(0, pos) + this.value.substring(pos, this.value.length).replace(myValue, "");
-        this.focus();
+        this.removeFromPosition(pos, myValue);
         this.selectionStart = selectionPos - myValue.length;
         this.selectionEnd = selectionPos - myValue.length;
-        this.scrollTop = scrollTop;
+      }
+    }
+  },
+  insertAtEndOfCaretLine: function(myValue) {
+    if(typeof this.selection() == "number") {
+      var selectionPos = this.selection();
+      var pos = this.value.substring(selectionPos, this.value.length).indexOf("\n") + this.value.substring(0, selectionPos).length;
+      this.insertIntoPosition(pos, myValue);
+      this.selectionStart = selectionPos;
+      this.selectionEnd = selectionPos;
+    }
+  },
+  removeFromEndOfCaretLine: function(myValue) {
+    if(typeof this.selection() == "number") {
+      var selectionPos = this.selection();
+      var pos = this.value.substring(selectionPos, this.value.length).indexOf("\n") + this.value.substring(0, selectionPos).length - 1;
+      var scrollTop = this.scrollTop;
+      if(this.value.substring(pos, this.value.length).hasAtBeginning(myValue)) {
+        this.removeFromPosition(pos, myValue);
+        this.selectionStart = selectionPos;
+        this.selectionEnd = selectionPos;
       }
     }
   },
@@ -99,7 +126,7 @@ $.extend(HTMLTextAreaElement.prototype, {
   indentLevel: function(opts) {
     var options = $.extend({
       target: "this",
-      indentTag: "<TAB>"
+      indentTag: "\u00bb"
     }, opts);
     var line;
     if(options["target"] == "parent") {
@@ -110,8 +137,7 @@ $.extend(HTMLTextAreaElement.prototype, {
       line = this.currentLine();
     }
     if(typeof line == "string" && line != "") {
-      line = line.chompLeft();
-      return line.countOfAtBeginning(options["indentTag"]);
+      return line.chompLeft().countOfAtBeginning(options["indentTag"]);
     }
     return 0;
   }
@@ -125,8 +151,10 @@ $.fn.extend({
     var $options = $.extend({
       width: 200,
       height: 100,
-      indentTag: "<TAB>",
+      indentTag: "\u00bb",
+      doneTag: "\u2713",
       indentKeyCode: 9, // Tab
+      doneKeyCode: 13,  // Enter
       clearKeyCode: 46, // Del
       modKey: "shiftKey"
     }, options);
@@ -136,11 +164,20 @@ $.fn.extend({
       if(this.indentLevel({target: "this", indentTag: $options["indentTag"]}) >= this.indentLevel({target: "child", indentTag: $options["indentTag"]})) {
         this.removeFromBeginningOfCaretLine($options["indentTag"]);
       }
+      if(this.currentLine().hasAtEnd($options["doneTag"]) && !this.currentLine().chompLeft().hasAtBeginning($options["indentTag"])) {
+        this.removeFromEndOfCaretLine($options["doneTag"]);
+      }
       return true;
     });
     $target.bind("indent:add", function() {
       if(this.indentLevel({target: "this", indentTag: $options["indentTag"]}) <= this.indentLevel({target: "parent", indentTag: $options["indentTag"]})) {
         this.insertAtBeginningOfCaretLine($options["indentTag"]);
+      }
+      return true;
+    });
+    $target.bind("indent:do", function() {
+      if(!this.currentLine().hasAtEnd($options["doneTag"]) && this.currentLine().chompLeft().hasAtBeginning($options["indentTag"])) {
+        this.insertAtEndOfCaretLine($options["doneTag"]);
       }
       return true;
     });
@@ -153,6 +190,9 @@ $.fn.extend({
       } else if(event.keyCode == $options["indentKeyCode"] && event[$options["modKey"]] == false) {
         event.preventDefault();
         $target.trigger("indent:add");
+      } else if(event.keyCode == $options["doneKeyCode"] && event[$options["modKey"]] == true) {
+        event.preventDefault();
+        $target.trigger("indent:do");
       }
     });
 
