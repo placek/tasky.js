@@ -25,6 +25,20 @@ $.extend(String.prototype, {
       value = value.replace(myValue, "");
     }
     return result;
+  },
+  removeFromBeginning: function(myValue) {
+    var value = this.clone();
+    while(value.hasAtBeginning(myValue)) {
+      value = value.replace(myValue, "");
+    }
+    return value;
+  },
+  removeFromEnd: function(myValue) {
+    var value = this.clone();
+    while(value.hasAtEnd(myValue)) {
+      value = value.replace(new RegExp(myValue + '$'), "");
+    }
+    return value;
   }
 });
 
@@ -146,7 +160,7 @@ $.extend(HTMLTextAreaElement.prototype, {
 $.fn.extend({
   tasky: function(options) {
 
-// VARIABLES
+// VARIABLES AND FUNCTIONS
     var $target = $(this);
     var $options = $.extend({
       indentTag: "\u00bb",
@@ -156,6 +170,24 @@ $.fn.extend({
       clearKeyCode: 46, // Del
       modKey: "shiftKey"
     }, options);
+    var tasks = function() {
+      var result = new Array();
+      $.each($target.val().split("\n"), function(i, elem) {
+        if(elem.chompLeft().hasAtBeginning($options["indentTag"])) {
+          result.push({ pos: i, val: elem.removeFromBeginning($options["indentTag"]).removeFromEnd($options["doneTag"]) });
+        }
+      });
+      return result;
+    };
+    var doneTasks = function() {
+      var result = new Array();
+      $.each($target.val().split("\n"), function(i, elem) {
+        if(elem.chompLeft().hasAtBeginning($options["indentTag"]) && elem.hasAtEnd($options["doneTag"])) {
+          result.push({ pos: i, val: elem.removeFromBeginning($options["indentTag"]).removeFromEnd($options["doneTag"]) });
+        }
+      });
+      return result;
+    };
 
 // EVENTS
     $target.bind("indent:remove", function() {
